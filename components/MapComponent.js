@@ -1,4 +1,4 @@
-import { Text, StyleSheet, View, TouchableOpacity } from "react-native";
+import { Text, StyleSheet, View, TouchableOpacity, Button } from "react-native";
 import React, { useRef, useState } from "react";
 import MapView, { PROVIDER_GOOGLE, Marker } from "react-native-maps";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
@@ -9,23 +9,23 @@ import { mapStyle } from "../global/mapStyle";
 
 import { carsAround } from "../global/data";
 
-export const GooglePlacesInput = ({ placeholder, onPlaceSelected }) => {
-  return (
-    <GooglePlacesAutocomplete
-      placeholder={placeholder}
-      fetchDetails
-      styles={{ textInput: styles.inputText }}
-      onPress={(data, details = null) => {
-        onPlaceSelected(details);
-      }}
-      query={{
-        key: GOOGLE_PLACES_APIKEY,
-        language: "en",
-      }}
-      currentLocation={true}
-    />
-  );
-};
+// export const GooglePlacesInput = ({ placeholder, onPlaceSelected }) => {
+//   return (
+//     <GooglePlacesAutocomplete
+//       placeholder={placeholder}
+//       fetchDetails
+//       styles={{ textInput: styles.inputText }}
+//       onPress={(data, details = null) => {
+//         onPlaceSelected(details);
+//       }}
+//       query={{
+//         key: GOOGLE_PLACES_APIKEY,
+//         language: "en",
+//       }}
+//       currentLocation={true}
+//     />
+//   );
+// };
 
 export default function MapComponent() {
   const [origin, setOrigin] = useState(null);
@@ -119,7 +119,7 @@ export default function MapComponent() {
           destination={coordinates[1]}
           apikey={GOOGLE_PLACES_APIKEY}
           strokeColor="#6644ff"
-          strokeWidth={6}
+          strokeWidth={8}
           onReady={traceRouteOnReady}
         />
       </MapView>
@@ -147,6 +147,9 @@ export default function MapComponent() {
           </View>
         ) : null}
       </View> */}
+      <View style={styles.searchContainer}>
+        <Button title="Get a Jobo" />
+      </View>
     </View>
   );
 }

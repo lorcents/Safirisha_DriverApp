@@ -93,9 +93,9 @@ const styles = StyleSheet.create({
   },
   authContent: {
     flex: 2,
-    marginTop: 64,
+    marginTop: 8,
     marginHorizontal: 0,
-    padding: 16,
+    padding: 24,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     backgroundColor: Colors.primary800,
@@ -108,5 +108,7 @@ const styles = StyleSheet.create({
   buttons: {
     marginTop: 8,
     backgroundColor: "azure",
+    borderRadius: 8,
+    elevation: 8,
   },
 });
