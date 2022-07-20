@@ -3,7 +3,7 @@ import React, { useRef, useState } from "react";
 import MapView, { PROVIDER_GOOGLE, Marker } from "react-native-maps";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import MapViewDirections from "react-native-maps-directions";
-import GOOGLE_PLACES_APIKEY from "../env";
+import GOOGLE_PLACES_APIKEY from "@env";
 import Constants from "expo-constants";
 import { mapStyle } from "../global/mapStyle";
 
