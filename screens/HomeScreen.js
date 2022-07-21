@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
   },
   home: {
-    backgroundColor: colors.blue,
+    backgroundColor: "#63cb72",
     paddingLeft: 20,
   },
 
