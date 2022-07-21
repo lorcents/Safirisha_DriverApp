@@ -1,5 +1,11 @@
-import { Text, StyleSheet, View, TouchableOpacity } from "react-native";
-import React, { useRef, useState } from "react";
+import {
+  Text,
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
+import React, { useRef, useState, useEffect } from "react";
 import { Marker } from "react-native-maps";
 import Constants from "expo-constants";
 import { io } from "socket.io-client";
@@ -115,7 +121,7 @@ export default function MapComponent() {
   };
 
   const lookForClients = async () => {
-    if (lookingForClients) {
+    if (inputs.lookingForClients) {
       setInputs({
         lookingForClients: false,
       });
@@ -198,7 +204,7 @@ export default function MapComponent() {
   let indicator = (
     <ActivityIndicator
       size="large"
-      animating={lookingForClients}
+      animating={inputs.lookingForClients}
       color="white"
     />
   );
@@ -239,7 +245,7 @@ export default function MapComponent() {
       </View>
       <View style={styles.mapStyle}>
         <Button onPress={lookForClients}>
-          {lookingForClients && indicator}
+          {inputs.lookingForClients && indicator}
           {inputs.buttonText}
         </Button>
       </View>
