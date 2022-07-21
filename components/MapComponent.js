@@ -98,10 +98,8 @@ export default function MapComponent() {
 
       Geocoder.from(clientOrigin)
         .then((json) => {
-          const address = json.results[0].formatted_address;
-          const location = json.results[0].geometry.location;
+          const address = json.results[0].address_components;
           console.log(`Client address ${address}`);
-          console.log(`Client location ${location}`);
         })
         .catch((err) => console.log(err));
 
