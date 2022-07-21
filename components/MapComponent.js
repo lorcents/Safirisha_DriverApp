@@ -1,21 +1,15 @@
-import {
-  Text,
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  ActivityIndicator,
-} from "react-native";
+import { Text, StyleSheet, View, ActivityIndicator } from "react-native";
 import React, { useRef, useState, useEffect } from "react";
 import { Marker } from "react-native-maps";
 import Constants from "expo-constants";
 import { io } from "socket.io-client";
-import BackgroundGeolocation from "@mauron85/react-native-background-geolocation";
 
 import { PlacesAutocomplete } from "./PlacesAutocomplete";
 import MapView from "./MapView";
 import MapDirections from "./MapDirections";
-// import { currentLocation } from "../Screens/HomeScreen";
+import { currentLocation } from "../screens/HomeScreen";
 import Button from "./Button";
+import { socketIoURL } from "../baseUrl";
 
 export default function MapComponent() {
   const [origin, setOrigin] = useState(null);
@@ -28,55 +22,6 @@ export default function MapComponent() {
     clientFound: false,
   });
   const mapRef = useRef(null);
-
-  useEffect(() => {
-    BackgroundGeolocation.configure({
-      desiredAccuracy: BackgroundGeolocation.HIGH_ACCURACY,
-      stationaryRadius: 50,
-      distanceFilter: 50,
-      debug: false,
-      startOnBoot: false,
-      stopOnTerminate: true,
-      locationProvider: BackgroundGeolocation.ACTIVITY_PROVIDER,
-      interval: 10000,
-      fastestInterval: 5000,
-      activitiesInterval: 10000,
-      stopOnStillActivity: false,
-    });
-
-    BackgroundGeolocation.on("authorization", (status) => {
-      console.log(
-        "[INFO] BackgroundGeolocation authorization status: " + status
-      );
-      if (status !== BackgroundGeolocation.AUTHORIZED) {
-        // we need to set delay or otherwise alert may not be shown
-        setTimeout(
-          () =>
-            Alert.alert(
-              "App requires location tracking permission",
-              "Would you like to open app settings?",
-              [
-                {
-                  text: "Yes",
-                  onPress: () => BackgroundGeolocation.showAppSettings(),
-                },
-                {
-                  text: "No",
-                  onPress: () => console.log("No Pressed"),
-                  style: "cancel",
-                },
-                ,
-              ]
-            ),
-          1000
-        );
-      }
-    });
-
-    // return () => {
-    //   BackgroundGeolocation.removeAllListeners();
-    // };
-  }, []);
 
   const moveTo = async (position) => {
     const camera = await mapRef.current.getCamera();
@@ -146,6 +91,9 @@ export default function MapComponent() {
       clientOrigin = co = routeResponse[0];
       clientDest = cd = routeResponse[1];
 
+      console.log(clientOrigin);
+      console.log(clientDest);
+
       // setOrigin(clientOrigin);
       // setDestination(clientDest);
 
@@ -154,60 +102,19 @@ export default function MapComponent() {
         lookingForClients: false,
         clientFound: true,
       });
-      acceptPassengerRequest();
+      // acceptPassengerRequest();
     });
   };
 
   const acceptPassengerRequest = () => {
-    BackgroundGeolocation.checkStatus((status) => {
-      console.log(
-        "[INFO] BackgroundGeolocation service is running",
-        status.isRunning
-      );
-      console.log(
-        "[INFO] BackgroundGeolocation services enabled",
-        status.locationServicesEnabled
-      );
-      console.log(
-        "[INFO] BackgroundGeolocation auth status: " + status.authorization
-      );
-
-      // you don't need to check status before start (this is just the example)
-      if (!status.isRunning) {
-        console.log("start", status.isRunning);
-        BackgroundGeolocation.start(); //triggers start on start event
-      }
-    });
-    BackgroundGeolocation.on("location", (location) => {
-      //Send driver location to paseenger socket io backend
-      const driverLocation = {
-        latitude: location.latitude,
-        longitude: location.longitude,
-      };
-      this.socket.emit("driverLocation", driverLocation);
-      setOrigin(driverLocation);
+    socket.on("driverLocation", (driverLocation) => {
+      driverLocation = currentLocation;
+      socket.emit("driverLocation", driverLocation);
     });
 
+    setOrigin(currentLocation);
     setDestination(clientOrigin);
-
-    if (Platform.OS === "ios") {
-      Linking.openURL(
-        `http://maps.apple.com/?daddr=${origin.latitude},${origin.longitude}`
-      );
-    } else {
-      Linking.openURL(
-        `geo:0,0?q=${origin.latitude},${origin.longitude}(Passenger)`
-      );
-    }
   };
-
-  let indicator = (
-    <ActivityIndicator
-      size="large"
-      animating={inputs.lookingForClients}
-      color="white"
-    />
-  );
 
   return (
     <>
@@ -243,11 +150,8 @@ export default function MapComponent() {
           </View>
         ) : null}
       </View>
-      <View style={styles.mapStyle}>
-        <Button onPress={lookForClients}>
-          {inputs.lookingForClients && indicator}
-          {inputs.buttonText}
-        </Button>
+      <View style={styles.bottomButton}>
+        <Button onPress={lookForClients}>{inputs.buttonText}</Button>
       </View>
     </>
   );
@@ -277,5 +181,16 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 8,
     top: Constants.statusBarHeight,
+  },
+  bottomButton: {
+    width: "100%",
+    position: "absolute",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 650,
+  },
+  requestButton: {
+    padding: 60,
+    fontSize: 24,
   },
 });

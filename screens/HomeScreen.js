@@ -19,42 +19,44 @@ import { mapStyle } from "../global/mapStyle";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
+let position;
 const HomeScreen = ({ navigation }) => {
-  // const [latlng, setLatlng] = useState({});
+  const [latlng, setLatlng] = useState({});
+  position = latlng;
 
-  // const checkPermissions = async () => {
-  //   const hasPermission = await Location.requestForegroundPermissionsAsync();
-  //   if (hasPermission.status === "granted") {
-  //     const permission = await askPermission();
-  //     return permission;
-  //   }
-  //   return true;
-  // };
+  const checkPermissions = async () => {
+    const hasPermission = await Location.requestForegroundPermissionsAsync();
+    if (hasPermission.status === "granted") {
+      const permission = await askPermission();
+      return permission;
+    }
+    return true;
+  };
 
-  // const askPermission = async () => {
-  //   const permission = await Location.requestForegroundPermissionsAsync();
-  //   return permission.status === "granted";
-  // };
+  const askPermission = async () => {
+    const permission = await Location.requestForegroundPermissionsAsync();
+    return permission.status === "granted";
+  };
 
-  // const getLocation = async () => {
-  //   try {
-  //     const { granted } = await Location.requestForegroundPermissionsAsync();
-  //     if (!granted) return;
-  //     const {
-  //       coords: { latitude, longitude },
-  //     } = await Location.getCurrentPositionAsync();
-  //     console.log(`checking location ${latitude}, ${longitude}`);
-  //     setLatlng({ latitude: latitude, longitude: longitude });
-  //   } catch (e) {}
-  // };
+  const getLocation = async () => {
+    try {
+      const { granted } = await Location.requestForegroundPermissionsAsync();
+      if (!granted) return;
+      const {
+        coords: { latitude, longitude },
+      } = await Location.getCurrentPositionAsync();
+      console.log(`checking location ${latitude}, ${longitude}`);
+      setLatlng({ latitude: latitude, longitude: longitude });
+    } catch (e) {}
+  };
 
-  // const _map = useRef(1);
+  const _map = useRef(1);
 
-  // useEffect(() => {
-  //   checkPermissions();
-  //   getLocation();
-  //   console.log(latlng);
-  // }, []);
+  useEffect(() => {
+    checkPermissions();
+    getLocation();
+    console.log(latlng);
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -186,6 +188,8 @@ const HomeScreen = ({ navigation }) => {
 };
 
 export default HomeScreen;
+
+export const currentLocation = position;
 
 const styles = StyleSheet.create({
   container: {
