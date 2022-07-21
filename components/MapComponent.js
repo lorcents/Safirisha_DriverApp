@@ -1,38 +1,76 @@
-import { Text, StyleSheet, View, TouchableOpacity, Button } from "react-native";
+import { Text, StyleSheet, View, TouchableOpacity } from "react-native";
 import React, { useRef, useState } from "react";
-import MapView, { PROVIDER_GOOGLE, Marker } from "react-native-maps";
-import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import MapViewDirections from "react-native-maps-directions";
-import GOOGLE_PLACES_APIKEY from "@env";
+import { GOOGLE_PLACES_APIKEY } from "@env";
+import { Marker } from "react-native-maps";
 import Constants from "expo-constants";
-import { mapStyle } from "../global/mapStyle";
 
-import { carsAround } from "../global/data";
-
-// export const GooglePlacesInput = ({ placeholder, onPlaceSelected }) => {
-//   return (
-//     <GooglePlacesAutocomplete
-//       placeholder={placeholder}
-//       fetchDetails
-//       styles={{ textInput: styles.inputText }}
-//       onPress={(data, details = null) => {
-//         onPlaceSelected(details);
-//       }}
-//       query={{
-//         key: GOOGLE_PLACES_APIKEY,
-//         language: "en",
-//       }}
-//       currentLocation={true}
-//     />
-//   );
-// };
+import { PlacesAutocomplete } from "./PlacesAutocomplete";
+import MapView from "./MapView";
+import MapDirections from "./MapDirections";
+import { currentLocation } from "../Screens/HomeScreen";
+import Button from "./Button";
 
 export default function MapComponent() {
   const [origin, setOrigin] = useState(null);
   const [destination, setDestination] = useState(null);
   const [distance, setDistance] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [inputs, setInputs] = useState({
+    lookingForClients: false,
+    buttonText: "FIND CLIENT",
+    clientFound: false,
+  });
   const mapRef = useRef(null);
+
+  useEffect(() => {
+    BackgroundGeolocation.configure({
+      desiredAccuracy: BackgroundGeolocation.HIGH_ACCURACY,
+      stationaryRadius: 50,
+      distanceFilter: 50,
+      debug: false,
+      startOnBoot: false,
+      stopOnTerminate: true,
+      locationProvider: BackgroundGeolocation.ACTIVITY_PROVIDER,
+      interval: 10000,
+      fastestInterval: 5000,
+      activitiesInterval: 10000,
+      stopOnStillActivity: false,
+    });
+
+    BackgroundGeolocation.on("authorization", (status) => {
+      console.log(
+        "[INFO] BackgroundGeolocation authorization status: " + status
+      );
+      if (status !== BackgroundGeolocation.AUTHORIZED) {
+        // we need to set delay or otherwise alert may not be shown
+        setTimeout(
+          () =>
+            Alert.alert(
+              "App requires location tracking permission",
+              "Would you like to open app settings?",
+              [
+                {
+                  text: "Yes",
+                  onPress: () => BackgroundGeolocation.showAppSettings(),
+                },
+                {
+                  text: "No",
+                  onPress: () => console.log("No Pressed"),
+                  style: "cancel",
+                },
+                ,
+              ]
+            ),
+          1000
+        );
+      }
+    });
+
+    // return () => {
+    //   BackgroundGeolocation.removeAllListeners();
+    // };
+  }, []);
 
   const moveTo = async (position) => {
     const camera = await mapRef.current.getCamera();
@@ -76,66 +114,124 @@ export default function MapComponent() {
     moveTo(position);
   };
 
-  const INITIAL_POSITION = {
-    latitude: 0.5143,
-    longitude: 35.2698,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
-    // latitudeDelta: 5.9,
-    // longitudeDelta: 2.0,
+  const lookForClients = async () => {
+    if (lookingForClients) {
+      setInputs({
+        lookingForClients: false,
+      });
+      return;
+    }
+
+    setInputs({
+      lookingForClients: true,
+      buttonText: "FINDING CLIENTS",
+    });
+
+    socket = io(socketIoURL);
+
+    socket.on("connect", () => {
+      socket.emit("lookingForClients");
+    });
+
+    socket.on("truckRequest", async (routeResponse) => {
+      const clientOrigin = routeResponse[0];
+      const clientDest = routeResponse[1];
+
+      setOrigin(clientOrigin);
+      setDestination(clientDest);
+
+      setInputs({
+        buttonText: "CLIENT FOUND! PRESS TO ACCEPT",
+        lookingForClients: false,
+        clientFound: true,
+      });
+    });
   };
 
-  const coordinates = [
-    {
-      latitude: 0.5142774999999999,
-      longitude: 35.2697802,
-    },
-    {
-      latitude: -1.2920659,
-      longitude: 36.8219462,
-    },
-  ];
-  console.log(origin);
-  console.log(destination);
-  return (
-    <View style={styles.container}>
-      <MapView
-        ref={mapRef}
-        provider={PROVIDER_GOOGLE}
-        style={styles.map}
-        initialRegion={INITIAL_POSITION}
-        // customMapStyle={mapStyle}
-        showsUserLocation={true}
-        followUserLocation={true}
-        rotateEnabled={true}
-        zoomEnabled={true}
-      >
-        {origin && <Marker coordinate={coordinates[0]} />}
-        {destination && <Marker coordinate={coordinates[1]} />}
-        {origin && destination && traceRoute()}
+  const acceptPassengerRequest = () => {
+    const clientLocation = coordinates;
 
-        <MapViewDirections
-          origin={coordinates[0]}
-          destination={coordinates[1]}
-          apikey={GOOGLE_PLACES_APIKEY}
-          strokeColor="#6644ff"
-          strokeWidth={8}
-          onReady={traceRouteOnReady}
+    BackgroundGeolocation.checkStatus((status) => {
+      console.log(
+        "[INFO] BackgroundGeolocation service is running",
+        status.isRunning
+      );
+      console.log(
+        "[INFO] BackgroundGeolocation services enabled",
+        status.locationServicesEnabled
+      );
+      console.log(
+        "[INFO] BackgroundGeolocation auth status: " + status.authorization
+      );
+
+      // you don't need to check status before start (this is just the example)
+      if (!status.isRunning) {
+        console.log("start", status.isRunning);
+        BackgroundGeolocation.start(); //triggers start on start event
+      }
+    });
+    BackgroundGeolocation.on("location", (location) => {
+      //Send driver location to paseenger socket io backend
+      this.socket.emit("driverLocation", {
+        latitude: location.latitude,
+        longitude: location.longitude,
+      });
+    });
+
+    if (Platform.OS === "ios") {
+      Linking.openURL(
+        `http://maps.apple.com/?daddr=${origin.latitude},${origin.longitude}`
+      );
+    } else {
+      Linking.openURL(
+        `geo:0,0?q=${origin.latitude},${origin.longitude}(Passenger)`
+      );
+    }
+  };
+
+  if (lookingForClients) {
+    findingPassengerActIndicator = (
+      <ActivityIndicator
+        size="large"
+        animating={lookingForClients}
+        color="white"
+      />
+    );
+  }
+
+  const driverToClient = (driverLoc) => {
+    travelTo = destination;
+    console.log(`Client's destination ${destination}`);
+    setOrigin(driverLoc);
+    setDestination(currentLocation);
+    console.log(`Current location ${currentLocation}`);
+  };
+
+  driverToClient({ latitude: 0.53368, longitude: 35.28515 });
+
+  return (
+    <>
+      <MapView reference={mapRef}>
+        {origin && <Marker coordinate={origin} />}
+        {destination && <Marker coordinate={destination} />}
+        {origin && destination && traceRoute()}
+        <MapDirections
+          placeOrigin={origin}
+          placeDest={destination}
+          trackRouteOnReady={traceRouteOnReady}
         />
       </MapView>
-      {/* <View style={styles.searchContainer}>
-        <GooglePlacesInput
+      <View style={styles.searchContainer}>
+        <PlacesAutocomplete
           placeholder="Origin"
           onPlaceSelected={(details = null) => {
             onPlaceSelected(details, "origin");
-            // 'details' is provided when fetchDetails = true
           }}
         />
         <View style={styles.compContainer}>
-          <GooglePlacesInput
+          <PlacesAutocomplete
             placeholder="Destination"
             onPlaceSelected={(details = null) => {
-              // 'details' is provided when fetchDetails = true
               onPlaceSelected(details, "destination");
             }}
           />
@@ -146,23 +242,20 @@ export default function MapComponent() {
             <Text>Duration : {Math.ceil(duration)} min</Text>
           </View>
         ) : null}
-      </View> */}
-      <View style={styles.searchContainer}>
-        <Button title="Get a Jobo" />
       </View>
-    </View>
+      <View style={styles.mapStyle}>
+        <BottomButton
+          onPressFunction={bottomButtonFunction}
+          buttonText={inputs.buttonText}
+        >
+          {findingPassengerActIndicator}
+        </BottomButton>
+      </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    alignContent: "center",
-    alignItems: "center",
-  },
-  map: {
-    height: "100%",
-    width: "100%",
-  },
   compContainer: {
     marginVertical: 10,
   },
@@ -171,21 +264,20 @@ const styles = StyleSheet.create({
   searchContainer: {
     position: "absolute",
     width: "90%",
+    marginTop: 40,
+    marginLeft: 20,
+    // alignItems: "center",
+    // justifyContent: "center",
     top: Constants.statusBarHeight,
   },
   searchContainerBelow: {
     position: "absolute",
     width: "90%",
-    marginTop: 20,
+    marginTop: 40,
     backgroundColor: "white",
     elevation: 6,
     padding: 8,
     borderRadius: 8,
     top: Constants.statusBarHeight,
-  },
-  inputText: {
-    // borderWidth: 1,
-    borderRadius: 6,
-    elevation: 16,
   },
 });

@@ -2,14 +2,12 @@ import React, { useEffect, useRef, useState } from "react";
 import { Alert, StyleSheet } from "react-native";
 import BackgroundGeolocation from "@mauron85/react-native-background-geolocation";
 
-function RequestDriver() {
+function ClientRequest() {
   const [inputs, setInputs] = useState({
-    lookingForPassengers: false,
-    buttonText: "FIND PASSENGER",
-    passengerFound: false,
+    lookingForClients: false,
+    buttonText: "FIND CLIENT",
+    clientFound: false,
   });
-
-  mapRef = useRef(null);
 
   let socket = null;
 
@@ -57,47 +55,47 @@ function RequestDriver() {
       }
     });
 
-    return () => {
-      BackgroundGeolocation.removeAllListeners();
-    };
+    // return () => {
+    //   BackgroundGeolocation.removeAllListeners();
+    // };
   }, []);
 
-  const lookForPassengers = async () => {
-    if (lookingForPassengers) {
+  const lookForClients = async () => {
+    if (lookingForClients) {
       setInputs({
-        lookingForPassengers: false,
+        lookingForClients: false,
       });
       return;
     }
 
     setInputs({
-      lookingForPassengers: true,
-      buttonText: "FINDING PASSENGERS",
+      lookingForClients: true,
+      buttonText: "FINDING CLIENTS",
     });
 
     socket = io(socketIoURL);
 
     socket.on("connect", () => {
-      socket.emit("lookingForPassengers");
+      socket.emit("lookingForClients");
     });
 
     socket.on("truckRequest", async (routeResponse) => {
-      await this.props.getRouteDirections(
-        routeResponse.geocoded_waypoints[0].place_id
-      );
-      this.map.fitToCoordinates(this.props.pointCoords, {
-        edgePadding: { top: 20, bottom: 20, left: 80, right: 80 },
-      });
+      const clientOrigin = routeResponse[0];
+      const clientDest = routeResponse[1];
+
+      setOrigin(clientOrigin);
+      setDestination(clientDest);
+
       setInputs({
-        buttonText: "PASSENGER FOUND! PRESS TO ACCEPT",
-        lookingForPassengers: false,
-        passengerFound: true,
+        buttonText: "CLIENT FOUND! PRESS TO ACCEPT",
+        lookingForClients: false,
+        clientFound: true,
       });
     });
   };
 
   const acceptPassengerRequest = () => {
-    const passengerLocation = coordinates;
+    const clientLocation = coordinates;
 
     BackgroundGeolocation.checkStatus((status) => {
       console.log(
@@ -128,11 +126,11 @@ function RequestDriver() {
 
     if (Platform.OS === "ios") {
       Linking.openURL(
-        `http://maps.apple.com/?daddr=${passengerLocation.latitude},${passengerLocation.longitude}`
+        `http://maps.apple.com/?daddr=${origin.latitude},${origin.longitude}`
       );
     } else {
       Linking.openURL(
-        `geo:0,0?q=${passengerLocation.latitude},${passengerLocation.longitude}(Passenger)`
+        `geo:0,0?q=${origin.latitude},${origin.longitude}(Passenger)`
       );
     }
   };
@@ -140,58 +138,32 @@ function RequestDriver() {
   let endMarker = null;
   let startMarker = null;
   let findingPassengerActIndicator = null;
-  let bottomButtonFunction = lookForPassengers;
+  let bottomButtonFunction = lookForClients;
 
   if (latitude === null) {
     return null;
   }
 
-  if (lookingForPassengers) {
+  if (lookingForClients) {
     findingPassengerActIndicator = (
       <ActivityIndicator
         size="large"
-        animating={lookingForPassengers}
+        animating={lookingForClients}
         color="white"
       />
     );
   }
 
-  if (passengerFound) {
-    //passengerSearchText = 'FOUND PASSENGER! PRESS TO ACCEPT RIDE?';
+  if (clientFound) {
+    //clientSearchText = 'FOUND PASSENGER! PRESS TO ACCEPT RIDE?';
     bottomButtonFunction = acceptPassengerRequest;
-  }
-
-  if (this.props.pointCoords.length > 1) {
-    endMarker = (
-      <Marker coordinate={coordinates}>
-        <Image
-          style={{ width: 40, height: 40 }}
-          source={require("../images/person-marker.png")}
-        />
-      </Marker>
-    );
   }
 
   return (
     <View style={styles.mapStyle}>
-      <MapView
-        ref={mapRef}
-        style={styles.mapStyle}
-        initialRegion={{
-          latitude: this.props.latitude,
-          longitude: this.props.longitude,
-          latitudeDelta: 0.015,
-          longitudeDelta: 0.0121,
-        }}
-        showsUserLocation={true}
-      >
-        {endMarker}
-        {startMarker}
-      </MapView>
-
       <BottomButton
         onPressFunction={bottomButtonFunction}
-        buttonText={this.state.buttonText}
+        buttonText={inputs.buttonText}
       >
         {findingPassengerActIndicator}
       </BottomButton>
@@ -199,6 +171,6 @@ function RequestDriver() {
   );
 }
 
-export default RequestDriver;
+export default ClientRequest;
 
 const styles = StyleSheet.create({});
