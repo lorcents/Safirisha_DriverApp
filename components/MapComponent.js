@@ -81,13 +81,14 @@ export default function MapComponent() {
     socket = io(socketIoURL);
 
     socket.on("connect", () => {
-      socket.emit("lookingForClients");
+      socket.emit("lookingForClients", "Hello there client");
     });
 
     let clientOrigin;
     let clientDest;
 
     socket.on("truckRequest", async (routeResponse) => {
+      console.log(`Route response from client ${routeResponse}`);
       clientOrigin = co = routeResponse[0];
       clientDest = cd = routeResponse[1];
 
@@ -102,14 +103,14 @@ export default function MapComponent() {
         lookingForClients: false,
         clientFound: true,
       });
-      // acceptPassengerRequest();
+      acceptPassengerRequest();
     });
   };
 
   const acceptPassengerRequest = () => {
     socket.on("driverLocation", (driverLocation) => {
       driverLocation = currentLocation;
-      socket.emit("driverLocation", driverLocation);
+      socket.broadcast.emit("driverLocation", driverLocation);
     });
 
     setOrigin(currentLocation);
@@ -168,8 +169,6 @@ const styles = StyleSheet.create({
     width: "90%",
     marginTop: 40,
     marginLeft: 20,
-    // alignItems: "center",
-    // justifyContent: "center",
     top: Constants.statusBarHeight,
   },
   searchContainerBelow: {
