@@ -182,7 +182,7 @@ const HomeScreen = ({ navigation }) => {
           </MapView> */}
         </View>
       </ScrollView>
-      <StatusBar style="light" backgroundColor="#2058c0" translucent={true} />
+      <StatusBar style="light" backgroundColor="#63cb72" translucent={true} />
     </View>
   );
 };
