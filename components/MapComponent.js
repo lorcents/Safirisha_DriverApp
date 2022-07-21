@@ -110,7 +110,7 @@ export default function MapComponent() {
   const acceptPassengerRequest = () => {
     socket.on("driverLocation", (driverLocation) => {
       driverLocation = currentLocation;
-      socket.broadcast.emit("driverLocation", driverLocation);
+      socket.emit("driverLocation", driverLocation);
     });
 
     setOrigin(currentLocation);
