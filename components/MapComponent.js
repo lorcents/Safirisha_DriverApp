@@ -3,6 +3,8 @@ import React, { useRef, useState, useEffect } from "react";
 import { Marker } from "react-native-maps";
 import Constants from "expo-constants";
 import { io } from "socket.io-client";
+import Geocoder from "react-native-geocoding";
+import { GOOGLE_PLACES_KEY } from "@env";
 
 import { PlacesAutocomplete } from "./PlacesAutocomplete";
 import MapView from "./MapView";
@@ -22,6 +24,8 @@ export default function MapComponent() {
     clientFound: false,
   });
   const mapRef = useRef(null);
+
+  Geocoder.init(GOOGLE_PLACES_KEY);
 
   const moveTo = async (position) => {
     const camera = await mapRef.current.getCamera();
@@ -91,6 +95,15 @@ export default function MapComponent() {
       console.log(`Route response from client ${routeResponse}`);
       clientOrigin = co = routeResponse[0];
       clientDest = cd = routeResponse[1];
+
+      Geocoder.from(clientOrigin)
+        .then((json) => {
+          const address = json.results[0].formatted_address;
+          const location = json.results[0].geometry.location;
+          console.log(`Client address ${address}`);
+          console.log(`Client location ${location}`);
+        })
+        .catch((err) => console.log(err));
 
       console.log(clientOrigin);
       console.log(clientDest);
