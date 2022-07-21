@@ -1,14 +1,14 @@
 import { Text, StyleSheet, View, TouchableOpacity } from "react-native";
 import React, { useRef, useState } from "react";
-import MapViewDirections from "react-native-maps-directions";
-import { GOOGLE_PLACES_APIKEY } from "@env";
 import { Marker } from "react-native-maps";
 import Constants from "expo-constants";
+import { io } from "socket.io-client";
+import BackgroundGeolocation from "@mauron85/react-native-background-geolocation";
 
 import { PlacesAutocomplete } from "./PlacesAutocomplete";
 import MapView from "./MapView";
 import MapDirections from "./MapDirections";
-import { currentLocation } from "../Screens/HomeScreen";
+// import { currentLocation } from "../Screens/HomeScreen";
 import Button from "./Button";
 
 export default function MapComponent() {
@@ -133,24 +133,26 @@ export default function MapComponent() {
       socket.emit("lookingForClients");
     });
 
-    socket.on("truckRequest", async (routeResponse) => {
-      const clientOrigin = routeResponse[0];
-      const clientDest = routeResponse[1];
+    let clientOrigin;
+    let clientDest;
 
-      setOrigin(clientOrigin);
-      setDestination(clientDest);
+    socket.on("truckRequest", async (routeResponse) => {
+      clientOrigin = co = routeResponse[0];
+      clientDest = cd = routeResponse[1];
+
+      // setOrigin(clientOrigin);
+      // setDestination(clientDest);
 
       setInputs({
         buttonText: "CLIENT FOUND! PRESS TO ACCEPT",
         lookingForClients: false,
         clientFound: true,
       });
+      acceptPassengerRequest();
     });
   };
 
   const acceptPassengerRequest = () => {
-    const clientLocation = coordinates;
-
     BackgroundGeolocation.checkStatus((status) => {
       console.log(
         "[INFO] BackgroundGeolocation service is running",
@@ -172,11 +174,15 @@ export default function MapComponent() {
     });
     BackgroundGeolocation.on("location", (location) => {
       //Send driver location to paseenger socket io backend
-      this.socket.emit("driverLocation", {
+      const driverLocation = {
         latitude: location.latitude,
         longitude: location.longitude,
-      });
+      };
+      this.socket.emit("driverLocation", driverLocation);
+      setOrigin(driverLocation);
     });
+
+    setDestination(clientOrigin);
 
     if (Platform.OS === "ios") {
       Linking.openURL(
@@ -189,25 +195,13 @@ export default function MapComponent() {
     }
   };
 
-  if (lookingForClients) {
-    findingPassengerActIndicator = (
-      <ActivityIndicator
-        size="large"
-        animating={lookingForClients}
-        color="white"
-      />
-    );
-  }
-
-  const driverToClient = (driverLoc) => {
-    travelTo = destination;
-    console.log(`Client's destination ${destination}`);
-    setOrigin(driverLoc);
-    setDestination(currentLocation);
-    console.log(`Current location ${currentLocation}`);
-  };
-
-  driverToClient({ latitude: 0.53368, longitude: 35.28515 });
+  let indicator = (
+    <ActivityIndicator
+      size="large"
+      animating={lookingForClients}
+      color="white"
+    />
+  );
 
   return (
     <>
@@ -244,12 +238,10 @@ export default function MapComponent() {
         ) : null}
       </View>
       <View style={styles.mapStyle}>
-        <BottomButton
-          onPressFunction={bottomButtonFunction}
-          buttonText={inputs.buttonText}
-        >
-          {findingPassengerActIndicator}
-        </BottomButton>
+        <Button onPress={lookForClients}>
+          {lookingForClients && indicator}
+          {inputs.buttonText}
+        </Button>
       </View>
     </>
   );

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect,  useState } from "react";
 import { Alert, StyleSheet } from "react-native";
 import BackgroundGeolocation from "@mauron85/react-native-background-geolocation";
 
