@@ -1,5 +1,6 @@
 import { Text, StyleSheet, View, ActivityIndicator } from "react-native";
 import React, { useRef, useState, useEffect } from "react";
+import { Avatar, Icon, PricingCard } from "react-native-elements";
 import { Marker } from "react-native-maps";
 import Constants from "expo-constants";
 import { io } from "socket.io-client";
@@ -128,8 +129,6 @@ export default function MapComponent() {
     setDestination(clientOrigin);
   };
 
-  let cardDetail = <View style={styles.cardDetail}></View>;
-
   return (
     <>
       <MapView reference={mapRef}>
@@ -165,7 +164,15 @@ export default function MapComponent() {
         ) : null}
       </View>
       <View style={styles.bottomButton}>
-        <Button onPress={lookForClients}>{inputs.buttonText}</Button>
+        <Button>{inputs.buttonText}</Button>
+        <PricingCard
+          containerStyle={{ width: "80%" }}
+          color="#63cb72"
+          title="New Customer"
+          price="ksh 10000"
+          info={["From : Eldoret", "To: Nakuru"]}
+          button={{ title: "Accept Request" }}
+        />
       </View>
     </>
   );
@@ -199,7 +206,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 650,
+    marginTop: 400,
   },
   requestButton: {
     padding: 60,

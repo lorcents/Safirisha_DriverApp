@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
   buttons: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginTop: "40%",
+    marginTop: "30%",
   },
 
   image: {
@@ -66,9 +66,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   text: {
+    padding: 3,
     color: "white",
     fontSize: 42,
     marginTop: 20,
+    borderBottomColor: "black",
+    borderBottomWidth: 1,
 
     fontWeight: "bold",
   },
