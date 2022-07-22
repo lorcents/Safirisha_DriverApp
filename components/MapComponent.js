@@ -4,7 +4,7 @@ import { Marker } from "react-native-maps";
 import Constants from "expo-constants";
 import { io } from "socket.io-client";
 import Geocoder from "react-native-geocoding";
-import { GOOGLE_PLACES_KEY } from "@env";
+import { GOOGLE_PLACES_APIKEY } from "@env";
 
 import { PlacesAutocomplete } from "./PlacesAutocomplete";
 import MapView from "./MapView";
@@ -25,7 +25,7 @@ export default function MapComponent() {
   });
   const mapRef = useRef(null);
 
-  Geocoder.init(GOOGLE_PLACES_KEY);
+  Geocoder.init(GOOGLE_PLACES_APIKEY);
 
   const moveTo = async (position) => {
     const camera = await mapRef.current.getCamera();
@@ -98,7 +98,7 @@ export default function MapComponent() {
 
       Geocoder.from(clientOrigin)
         .then((json) => {
-          const address = json.results[0].address_components;
+          const address = json.results[0].address_components[1].short_name;
           console.log(`Client address ${address}`);
         })
         .catch((err) => console.log(err));
@@ -127,6 +127,8 @@ export default function MapComponent() {
     setOrigin(currentLocation);
     setDestination(clientOrigin);
   };
+
+  let cardDetail = <View style={styles.cardDetail}></View>;
 
   return (
     <>

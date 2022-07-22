@@ -32,6 +32,9 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "white",
     textAlign: "center",
+    fontSize: 24,
+    paddingLeft: 30,
+    paddingRight: 30,
   },
 
   pressed: {
