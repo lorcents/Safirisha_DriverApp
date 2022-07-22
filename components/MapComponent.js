@@ -165,14 +165,18 @@ export default function MapComponent() {
       </View>
       <View style={styles.bottomButton}>
         <Button>{inputs.buttonText}</Button>
-        <PricingCard
-          containerStyle={{ width: "80%" }}
-          color="#63cb72"
-          title="New Customer"
-          price="ksh 10000"
-          info={["From : Eldoret", "To: Nakuru"]}
-          button={{ title: "Accept Request" }}
-        />
+        {inputs.clientFound && (
+          <View style={styles.detailCard}>
+            <PricingCard
+              containerStyle={{ width: "80%" }}
+              color="#63cb72"
+              title="New Customer"
+              price="ksh 10000"
+              info={["From : Eldoret", "To: Nakuru"]}
+              button={{ title: "Accept Request" }}
+            />
+          </View>
+        )}
       </View>
     </>
   );
@@ -202,6 +206,13 @@ const styles = StyleSheet.create({
     top: Constants.statusBarHeight,
   },
   bottomButton: {
+    width: "100%",
+    position: "absolute",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 650,
+  },
+  detailCard: {
     width: "100%",
     position: "absolute",
     justifyContent: "center",
